@@ -5,6 +5,12 @@ import { uploadMedia } from "@/lib/cloudinary";
 
 export async function POST(req) {
   try {
+    console.log("Cloudinary config:", {
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      has_secret: !!process.env.CLOUDINARY_API_SECRET,
+    });
+
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -21,6 +27,7 @@ export async function POST(req) {
       type: result.resource_type === "video" ? "video" : "image",
     });
   } catch (err) {
+    console.error("Upload error:", JSON.stringify(err, null, 2));
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
