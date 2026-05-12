@@ -18,11 +18,16 @@ export default function CreatePost({ onPost }) {
       const uploaded = await Promise.all(files.map(async (file) => {
         const formData = new FormData();
         formData.append("file", file);
-        const { data } = await axios.post("/api/posts/upload", formData);
+        const { data } = await axios.post("/api/posts/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
         return data;
       }));
       setMedia(prev => [...prev, ...uploaded]);
-    } catch { toast.error("Upload failed"); }
+    } catch (err) {
+      console.error("Upload error:", err.response?.data || err.message);
+      toast.error(err.response?.data?.error || "Upload failed");
+    }
     setUploading(false);
   };
 
