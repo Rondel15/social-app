@@ -9,7 +9,7 @@ export default function PeopleYouMayKnow() {
   const [sent, setSent] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/users").then(({ data }) => setUsers(data.users.slice(0, 5)));
+    axios.get("/api/users?excludeFriends=true").then(({ data }) => setUsers(data.users.slice(0, 5)));
   }, []);
 
   const sendRequest = async (userId) => {
