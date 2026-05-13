@@ -10,12 +10,20 @@ export async function POST(req) {
 
     const formData = await req.formData();
     const file = formData.get("file");
-    console.log("File:", file?.name, file?.size);
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-    return NextResponse.json({ ok: true, filename: file.name });
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    console.log("Uploading to Cloudinary...");
+    const result = await uploadMedia(buffer, "social-app/posts");
+    console.log("Cloudinary result:", result?.secure_url);
+
+    return NextResponse.json({
+      url: result.secure_url,
+      type: result.resource_type === "video" ? "video" : "image",
+    });
   } catch (err) {
-    console.error("Error:", err.message);
+    console.error("Cloudinary error:", err.message, JSON.stringify(err));
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
