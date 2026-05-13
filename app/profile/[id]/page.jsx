@@ -19,9 +19,13 @@ function EditProfileModal({ profile, onClose, onSave }) {
   const [cover, setCover] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(profile?.avatar || null);
   const [coverPreview, setCoverPreview] = useState(profile?.cover || null);
+  const [bgMusic, setBgMusic] = useState(profile?.bgMusic || null);
+  const [bgMusicFile, setBgMusicFile] = useState(null);
+  const [bgMusicName, setBgMusicName] = useState(profile?.bgMusic ? "Current music set" : "");
   const [saving, setSaving] = useState(false);
   const avatarRef = useRef();
   const coverRef = useRef();
+  const musicRef = useRef();
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
@@ -45,13 +49,17 @@ function EditProfileModal({ profile, onClose, onSave }) {
     try {
       let avatarUrl = avatarPreview ? profile?.avatar : "";
       let coverUrl = coverPreview ? profile?.cover : "";
+      let bgMusicUrl = bgMusic && !bgMusicFile ? bgMusic : "";
+
       if (avatar) avatarUrl = await uploadFile(avatar);
       if (cover) coverUrl = await uploadFile(cover);
+      if (bgMusicFile) bgMusicUrl = await uploadFile(bgMusicFile);
 
       const { data } = await axios.patch(`/api/users/${profile._id}`, {
         ...form,
         avatar: avatarUrl,
         cover: coverUrl,
+        bgMusic: bgMusicUrl,
       });
       toast.success("Profile updated!");
       onSave(data.user);
@@ -164,6 +172,48 @@ function EditProfileModal({ profile, onClose, onSave }) {
             <p className="text-xs text-muted text-right mt-1">{form.bio.length}/200</p>
           </div>
 
+          {/* Background Music */}
+          <div>
+            <label className="text-xs text-muted block mb-1">Profile Background Music</label>
+            <div className="flex items-center gap-3 p-3 bg-surface border border-border rounded-lg">
+              {bgMusic ? (
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <svg className="w-4 h-4 text-accent flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                  <span className="text-xs text-soft truncate">{bgMusicName}</span>
+                  <button
+                    type="button"
+                    onClick={() => { setBgMusic(null); setBgMusicFile(null); setBgMusicName(""); }}
+                    className="ml-auto text-muted hover:text-red-400 transition-colors flex-shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => musicRef.current?.click()}
+                  className="flex items-center gap-2 text-xs text-muted hover:text-accent transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                  Upload background music (mp3)
+                </button>
+              )}
+            </div>
+            <input
+              ref={musicRef}
+              type="file"
+              accept="audio/mp3,audio/*"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                setBgMusicFile(file);
+                setBgMusic(URL.createObjectURL(file));
+                setBgMusicName(file.name);
+              }}
+            />
+          </div>
+
           {/* Save button */}
           <button
             onClick={handleSave}
@@ -187,6 +237,8 @@ export default function ProfilePage() {
   const [friendRequest, setFriendRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -199,9 +251,33 @@ export default function ProfilePage() {
         setPosts(data.posts);
         setFriendRequest(data.friendRequest);
         setLoading(false);
+        if (data.user?.bgMusic) {
+          setTimeout(() => {
+            audioRef.current?.play()
+              .then(() => setIsPlaying(true))
+              .catch(() => setIsPlaying(false));
+          }, 500);
+        }
       });
     }
+    // Stop music when leaving
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
   }, [id, status]);
+
+  const toggleMusic = () => {
+    if (!audioRef.current) return;
+    if (audioRef.current.paused) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+    } else {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
 
   const isOwnProfile = session?.user?.id === id;
   const isFriend = profile?.friends?.some(f => f._id === session?.user?.id);
@@ -238,6 +314,34 @@ export default function ProfilePage() {
             update({ avatar: updated.avatar, username: updated.username });
           }}
         />
+      )}
+
+      {/* Background music player */}
+      {profile?.bgMusic && (
+        <>
+          <audio ref={audioRef} src={profile.bgMusic} loop />
+          <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-card border border-border rounded-full px-4 py-2 shadow-lg">
+            {isPlaying && (
+              <div className="flex gap-0.5 items-end h-4">
+                {[60, 100, 40, 80].map((h, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-accent rounded-full animate-bounce"
+                    style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
+              </div>
+            )}
+            <span className="text-xs text-muted">{isPlaying ? "Now Playing" : "Music Paused"}</span>
+            <button onClick={toggleMusic} className="text-muted hover:text-accent transition-colors ml-1">
+              {isPlaying ? (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              )}
+            </button>
+          </div>
+        </>
       )}
 
       <div className="pt-14">

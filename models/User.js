@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
     bio:       { type: String, default: "", maxlength: 200 },
     location:  { type: String, default: "" },
     website:   { type: String, default: "" },
+    bgMusic:   { type: String, default: "" },
     friends:   [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     isOnline:  { type: Boolean, default: false },
     lastSeen:  { type: Date, default: Date.now },
