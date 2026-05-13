@@ -31,8 +31,8 @@ export async function PATCH(req, { params }) {
     if (!session || session.user.id !== params.id)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await connectDB();
-    const { name, bio, location, website, avatar, cover } = await req.json();
-    const user = await User.findByIdAndUpdate(params.id, { name, bio, location, website, avatar, cover }, { new: true }).select("-password");
+    const { name, username, bio, location, website, avatar, cover } = await req.json();
+    const user = await User.findByIdAndUpdate(params.id, { name, username, bio, location, website, avatar, cover }, { new: true }).select("-password");
     return NextResponse.json({ user });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
