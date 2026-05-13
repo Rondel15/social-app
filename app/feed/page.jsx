@@ -36,7 +36,7 @@ export default function FeedPage() {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
-      <div className="pt-14 max-w-5xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="pt-20 max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <CreatePost onPost={handleNewPost} />
           {loading && <p className="text-muted text-sm text-center py-8">Loading posts...</p>}
