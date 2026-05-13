@@ -157,7 +157,7 @@ function EditProfileModal({ profile, onClose, onSave }) {
 }
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const { id } = useParams();
   const [profile, setProfile] = useState(null);
@@ -211,7 +211,10 @@ export default function ProfilePage() {
         <EditProfileModal
           profile={profile}
           onClose={() => setShowEdit(false)}
-          onSave={(updated) => setProfile(updated)}
+          onSave={(updated) => {
+            setProfile(updated);
+            update({ avatar: updated.avatar, username: updated.username });
+          }}
         />
       )}
 

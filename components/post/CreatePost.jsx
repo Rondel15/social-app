@@ -46,8 +46,10 @@ export default function CreatePost({ onPost }) {
   return (
     <div className="bg-card border border-border rounded-xl p-4">
       <div className="flex gap-3">
-        <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-          {session?.user?.username?.[0]?.toUpperCase()}
+        <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-sm font-medium flex-shrink-0 overflow-hidden">
+          {session?.user?.avatar
+            ? <img src={session.user.avatar} className="w-full h-full object-cover" />
+            : session?.user?.username?.[0]?.toUpperCase()}
         </div>
         <form onSubmit={handleSubmit} className="flex-1">
           <textarea
